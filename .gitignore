@@ -1,0 +1,18 @@
+.anchor
+.DS_Store
+target
+**/*.rs.bk
+node_modules
+test-ledger
+.yarn
+
+# Keypairs (CRITICAL!)
+*-keypair.json
+# Environment secrets
+.env
+.env.local
+# IDE
+.vscode/
+*.swp
+*.log
+

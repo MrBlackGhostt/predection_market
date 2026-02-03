@@ -1,0 +1,20 @@
+use anchor_lang::prelude::*;
+
+pub mod errors;
+pub mod instructions;
+pub mod states;
+
+declare_id!("xU2NJKXuSyyrGC8ntDjUG6ESH1YB6CNtivV8MTG9YGV");
+
+#[program]
+pub mod predection {
+    use super::*;
+
+    pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
+        msg!("Greetings from: {:?}", ctx.program_id);
+        Ok(())
+    }
+}
+
+#[derive(Accounts)]
+pub struct Initialize {}
