@@ -1,4 +1,4 @@
-use crate::states::Market;
+use crate::states::{Market, MarketOption, Status};
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
@@ -27,7 +27,7 @@ pub struct CreateMarket<'info> {
         init,
         payer = market_creator,
         mint::decimals = 6,
-        mint::authority = market_creator,
+        mint::authority = market,
         seeds = [b"yes_mint", market.key().as_ref()],
         bump
     )]
@@ -37,7 +37,7 @@ pub struct CreateMarket<'info> {
         init,
         payer = market_creator,
         mint::decimals = 6,
-        mint::authority = market_creator,
+        mint::authority = market,
         seeds = [b"no_mint", market.key().as_ref()],
         bump
     )]
@@ -55,4 +55,33 @@ pub struct CreateMarket<'info> {
     pub token_program: Interface<'info, TokenInterface>,
     pub associated_token_program: Program<'info, AssociatedToken>,
     pub system_program: Program<'info, System>,
+}
+
+impl<'info> CreateMarket<'info> {
+    pub fn create_market(
+        &mut self,
+        resolver: Pubkey,
+        market_id: u64,
+        question: String,
+        duration_time: i64,
+        fee: u64,
+        bump: u8,
+    ) -> Result<()> {
+        self.market.market_id = market_id;
+        self.market.bump = bump;
+        self.market.fee = fee;
+        self.market.authority = self.market_creator.key();
+        self.market.resolver = resolver;
+        self.market.market_vault = self.market_vault.key();
+        self.market.fee_collector = self.market_creator.key();
+        self.market.status = Status::Open;
+        self.market.yes_mint = self.yes_mint.key();
+        self.market.no_mint = self.no_mint.key();
+        self.market.collateral_mint = self.collateral_mint.key();
+        let clock = Clock::get()?;
+        self.market.resolution_time = clock.unix_timestamp;
+        self.market.market_close_timestamp = self.market.resolution_time + duration_time;
+        self.market.question = question;
+        Ok(())
+    }
 }
