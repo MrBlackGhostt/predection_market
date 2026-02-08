@@ -38,4 +38,11 @@ pub mod predection {
     pub fn resolve_market(ctx: Context<ResolveMarket>, outcome: bool) -> Result<()> {
         ctx.accounts.resolve_market(outcome)
     }
+
+    pub fn claim_winning(ctx: Context<ClaimWinning>) -> Result<()> {
+        let yes_bump = ctx.bumps.yes_mint;
+        let no_bump = ctx.bumps.no_mint;
+        ctx.accounts.claim_winning(yes_bump, no_bump)?;
+        Ok(())
+    }
 }
