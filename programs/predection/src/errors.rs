@@ -18,4 +18,6 @@ pub enum Errors {
     MarketFinished,
     #[msg("Market betting period has not ended yet")]
     MarketNotClosed,
+    #[msg("Market is already setteled")]
+    MarketIsSettled,
 }

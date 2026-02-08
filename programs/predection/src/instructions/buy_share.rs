@@ -62,7 +62,7 @@ pub struct BuyShare<'info> {
 }
 
 impl<'info> BuyShare<'info> {
-    pub fn buy_share(&mut self, amount: u64, is_yes: bool,  ) -> Result<()> {
+    pub fn buy_share(&mut self, amount: u64, is_yes: bool) -> Result<()> {
         let signer_bal = self.user_collateral_mint_ata.amount;
         println!("Signer collateral_mint balance:  {}", signer_bal);
 
