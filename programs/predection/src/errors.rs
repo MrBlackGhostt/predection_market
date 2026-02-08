@@ -16,4 +16,6 @@ pub enum Errors {
     InvalidMarketStatus,
     #[msg("Market already finished")]
     MarketFinished,
+    #[msg("Market betting period has not ended yet")]
+    MarketNotClosed,
 }

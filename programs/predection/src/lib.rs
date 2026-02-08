@@ -32,7 +32,10 @@ pub mod predection {
         market_id: u64,
         is_yes: bool,
     ) -> Result<()> {
-        let bump = ctx.bumps.market;
-        ctx.accounts.buy_share(amount, is_yes, bump, market_id)
+        ctx.accounts.buy_share(amount, is_yes)
+    }
+
+    pub fn resolve_market(ctx: Context<ResolveMarket>, outcome: bool) -> Result<()> {
+        ctx.accounts.resolve_market(outcome)
     }
 }

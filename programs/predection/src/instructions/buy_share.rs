@@ -8,13 +8,13 @@ use crate::errors::Errors;
 use crate::states::{Market, Status};
 
 #[derive(Accounts)]
-#[instruction(market_id:u64, is_yes:bool)]
+#[instruction( is_yes:bool)]
 pub struct BuyShare<'info> {
     #[account(mut)]
     signer: Signer<'info>,
 
     //predection-market
-    #[account(seeds = [b"market", market.authority.as_ref(), &market_id.to_le_bytes()],bump)]
+    #[account(seeds = [b"market", market.authority.as_ref(), &market.market_id.to_le_bytes()],bump)]
     pub market: Account<'info, Market>,
 
     #[account(mut, constraint = market_vault.key() == market.market_vault @ Errors::InvalidVault)]
@@ -62,7 +62,7 @@ pub struct BuyShare<'info> {
 }
 
 impl<'info> BuyShare<'info> {
-    pub fn buy_share(&mut self, amount: u64, is_yes: bool, bump: u8, market_id: u64) -> Result<()> {
+    pub fn buy_share(&mut self, amount: u64, is_yes: bool,  ) -> Result<()> {
         let signer_bal = self.user_collateral_mint_ata.amount;
         println!("Signer collateral_mint balance:  {}", signer_bal);
 
@@ -117,8 +117,8 @@ impl<'info> BuyShare<'info> {
             let seeds = &[
                 b"market",
                 market_creator_key.as_ref(),
-                &market_id.to_le_bytes(),
-                &[bump],
+                &self.market.market_id.to_le_bytes(),
+                &[self.market.bump],
             ];
             let signer_seeds = &[&seeds[..]];
 
@@ -136,8 +136,8 @@ impl<'info> BuyShare<'info> {
             let seeds = &[
                 b"market",
                 market_creator_key.as_ref(),
-                &market_id.to_le_bytes(),
-                &[bump],
+                &self.market.market_id.to_le_bytes(),
+                &[self.market.bump],
             ];
             let signer_seeds = &[&seeds[..]];
 
