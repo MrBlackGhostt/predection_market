@@ -13,6 +13,10 @@ pub struct BuyShare<'info> {
     #[account(mut)]
     signer: Signer<'info>,
 
+#[account(mut, constraint = fee_collector_ata.owner == market.fee_collector @ Errors::InvalidMarketFeeCollector,
+    constraint = fee_collector_ata.mint == collateral_mint.key() @Errors::InvalidMint)]
+    pub fee_collector_ata: InterfaceAccount<'info, TokenAccount>,
+
     //predection-market
     #[account(seeds = [b"market", market.authority.as_ref(), &market.market_id.to_le_bytes()],bump)]
     pub market: Account<'info, Market>,
@@ -82,9 +86,7 @@ impl<'info> BuyShare<'info> {
 
         // Calculate fee (fee is in BPS: 100 = 1%)
         let fee_amount = (amount * self.market.fee) / 10000;
-        let net_amount = amount
-            .checked_sub(fee_amount)
-            .ok_or(Errors::ErrorInvalidAmount)?;
+       
 
         // Transfer full amount to market vault
         let ctx_acc = TransferChecked {
@@ -96,16 +98,13 @@ impl<'info> BuyShare<'info> {
 
         let ctx = CpiContext::new(self.token_program.to_account_info(), ctx_acc);
 
-        token_interface::transfer_checked(ctx, amount, self.collateral_mint.decimals)?;
+ let net_amount = amount.checked_sub(fee_amount).ok_or( Errors::ErrorInvalidAmount)?;
 
-        // Transfer fee to fee collector (if fee > 0)
-        if fee_amount > 0 {
-            // Note: In production, you'd transfer from vault to fee_collector
-            // For now, we'll track it in the market account
-            msg!("Fee collected: {} ({} BPS)", fee_amount, self.market.fee);
-        }
+        token_interface::transfer_checked(ctx, net_amount, self.collateral_mint.decimals)?;
 
-        //mint the yes & no token accoringly
+
+           
+
 
         if is_yes {
             let mint_acc = MintTo {
@@ -118,14 +117,16 @@ impl<'info> BuyShare<'info> {
                 b"market",
                 market_creator_key.as_ref(),
                 &self.market.market_id.to_le_bytes(),
-                &[self.market.bump],
+                &[self.market.bump]
             ];
             let signer_seeds = &[&seeds[..]];
 
             let ctx = CpiContext::new(self.token_program.to_account_info(), mint_acc)
                 .with_signer(signer_seeds);
 
-            token_interface::mint_to(ctx, amount)?;
+            token_interface::mint_to(ctx, net_amount)?;
+
+            self.market.total_yes_mint_supply += net_amount;
         } else {
             let mint_acc = MintTo {
                 mint: self.no_mint.to_account_info(),
@@ -144,8 +145,33 @@ impl<'info> BuyShare<'info> {
             let ctx = CpiContext::new(self.token_program.to_account_info(), mint_acc)
                 .with_signer(signer_seeds);
 
-            token_interface::mint_to(ctx, amount)?;
+
+            token_interface::mint_to(ctx, net_amount)?;
+                        self.market.total_no_mint_supply += net_amount;
+
         }
+        // Transfer fee to fee collector (if fee > 0)
+        if fee_amount > 0{
+        
+
+  let ctx_acc = TransferChecked {
+                mint: self.collateral_mint.to_account_info(),
+                from: self.user_collateral_mint_ata.to_account_info(),
+                to: self.fee_collector_ata.to_account_info(),
+                authority: self.signer.to_account_info(),
+            };
+
+            let ctx = CpiContext::new(self.token_program.to_account_info(), ctx_acc);
+
+            token_interface::transfer_checked(
+                ctx,
+                fee_amount,
+                self.collateral_mint.decimals,
+            )?;
+            msg!("Fee collected: {} ({} BPS)", fee_amount, self.market.fee);
+        }
+
+
         Ok(())
     }
 }

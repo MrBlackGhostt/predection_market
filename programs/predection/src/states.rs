@@ -26,10 +26,13 @@ pub struct Market {
     pub no_mint: Pubkey,
     pub market_vault: Pubkey,
     pub collateral_mint: Pubkey,
+    pub total_yes_mint_supply: u64,
+    pub total_no_mint_supply: u64,
     pub market_close_timestamp: i64,
     #[max_len(100)]
     pub question: String,
     pub fee_collector: Pubkey,
+    pub fee_collector_ata: Pubkey,
     pub fee: u64,
     pub bump: u8,
 }

@@ -77,6 +77,8 @@ impl<'info> CreateMarket<'info> {
         self.market.status = Status::Open;
         self.market.yes_mint = self.yes_mint.key();
         self.market.no_mint = self.no_mint.key();
+        self.market.total_yes_mint_supply = 0;
+        self.market.total_no_mint_supply = 0;
         self.market.collateral_mint = self.collateral_mint.key();
         let clock = Clock::get()?;
         self.market.resolution_time = clock.unix_timestamp;
