@@ -1,6 +1,7 @@
 use crate::errors::Errors;
 use crate::states::{Market, Status};
 use anchor_lang::prelude::*;
+use anchor_spl::token_interface::Mint;
 
 #[derive(Accounts)]
 #[instruction(outcome: bool)]
@@ -17,6 +18,13 @@ constraint = *resolver.key == market.resolver @ Errors::InvalidMarketResolver
         bump = market.bump
     )]
     pub market: Account<'info, Market>,
+
+    #[account(mut, seeds = [b"yes_mint", market.key().as_ref()],         bump, constraint=market.yes_mint == yes_mint.key() @ Errors::InvalidMint)]
+    pub yes_mint: InterfaceAccount<'info, Mint>,
+
+    #[account(mut,seeds = [b"no_mint", market.key().as_ref()],
+        bump, constraint=market.no_mint == no_mint.key() @ Errors::InvalidMint)]
+    pub no_mint: InterfaceAccount<'info, Mint>,
 }
 
 impl<'info> ResolveMarket<'info> {
@@ -27,6 +35,11 @@ impl<'info> ResolveMarket<'info> {
         require!(
             matches!(self.market.status, Status::Open),
             Errors::InvalidMarketStatus
+        );
+
+        require!(
+            self.yes_mint.supply > 0 && self.no_mint.supply > 0,
+            Errors::CannotResolveOnesideMarket
         );
 
         // Check resolver is the market authority

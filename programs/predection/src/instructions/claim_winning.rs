@@ -7,7 +7,6 @@ use anchor_spl::token_interface::{
 };
 
 #[derive(Accounts)]
-#[instruction(outcome: bool)]
 pub struct ClaimWinning<'info> {
     #[account(mut)]
     pub signer: Signer<'info>,
@@ -68,11 +67,13 @@ impl<'info> ClaimWinning<'info> {
         let signer_seeds = &[&seeds[..]];
 
         if self.market.option == Some(true) {
+            require!(user_yes_token_amount != 0, Errors::TokenAmountIsZero);
             let ctx_burn_acc = Burn {
                 mint: self.yes_mint.to_account_info(),
                 from: self.yes_mint_ata.to_account_info(),
                 authority: self.signer.to_account_info(),
             };
+            let winning_supply = self.yes_mint.supply;
 
             let cpi_ctx = CpiContext::new(self.token_program.to_account_info(), ctx_burn_acc);
             token_interface::burn(cpi_ctx, user_yes_token_amount)?;
@@ -87,12 +88,17 @@ impl<'info> ClaimWinning<'info> {
             let ctx = CpiContext::new(self.token_program.to_account_info(), ctx_acc)
                 .with_signer(signer_seeds);
 
-            token_interface::transfer_checked(
-                ctx,
-                user_yes_token_amount,
-                self.collateral_mint.decimals,
-            )?;
+            let vault_amount = self.market_vault.amount;
+            let amount_supply = user_yes_token_amount
+                .checked_mul(vault_amount)
+                .ok_or(Errors::ErrorInCalculating)?
+                .checked_div(winning_supply)
+                .ok_or(Errors::ErrorInCalculating)?;
+
+            token_interface::transfer_checked(ctx, amount_supply, self.collateral_mint.decimals)?;
         } else if self.market.option == Some(false) {
+            require!(user_no_token_amount != 0, Errors::TokenAmountIsZero);
+
             let ctx_burn_acc = Burn {
                 mint: self.no_mint.to_account_info(),
                 from: self.no_mint_ata.to_account_info(),
@@ -113,13 +119,17 @@ impl<'info> ClaimWinning<'info> {
             let ctx = CpiContext::new(self.token_program.to_account_info(), ctx_acc)
                 .with_signer(signer_seeds);
 
-            token_interface::transfer_checked(
-                ctx,
-                user_no_token_amount,
-                self.collateral_mint.decimals,
-            )?;
-        }
+            let winning_supply = self.no_mint.supply;
 
+            let vault_amount = self.market_vault.amount;
+            let amount_supply = user_no_token_amount
+                .checked_mul(vault_amount)
+                .ok_or(Errors::ErrorInCalculating)?
+                .checked_div(winning_supply)
+                .ok_or(Errors::ErrorInCalculating)?;
+
+            token_interface::transfer_checked(ctx, amount_supply, self.collateral_mint.decimals)?;
+        }
         Ok(())
     }
 }

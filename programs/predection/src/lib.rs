@@ -15,7 +15,7 @@ pub mod predection {
     pub fn initialize(
         ctx: Context<CreateMarket>,
         resolver: Pubkey,
-        market_id: u64,
+        _market_id: u64,
         question: String,
         duration_time: i64,
         fee: u64,
@@ -23,13 +23,13 @@ pub mod predection {
         msg!("Greetings from: {:?}", ctx.program_id);
         let bump = ctx.bumps.market;
         ctx.accounts
-            .create_market(resolver, market_id, question, duration_time, fee, bump)
+            .create_market(resolver, _market_id, question, duration_time, fee, bump)
     }
 
     pub fn buy_share(
         ctx: Context<BuyShare>,
         amount: u64,
-        market_id: u64,
+        _market_id: u64,
         is_yes: bool,
     ) -> Result<()> {
         ctx.accounts.buy_share(amount, is_yes)

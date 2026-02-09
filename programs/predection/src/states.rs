@@ -26,13 +26,25 @@ pub struct Market {
     pub no_mint: Pubkey,
     pub market_vault: Pubkey,
     pub collateral_mint: Pubkey,
-    pub total_yes_mint_supply: u64,
-    pub total_no_mint_supply: u64,
     pub market_close_timestamp: i64,
     #[max_len(100)]
     pub question: String,
-    pub fee_collector: Pubkey,
-    pub fee_collector_ata: Pubkey,
-    pub fee: u64,
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    //  FEE STRUCTURE (Protocol + Market Creator)
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // OLD: All fees went to market creator (centralization risk)
+    // NEW: Fees are split 50/50 between protocol treasury and market creator
+    //
+    // Why split fees?
+    // - Protocol treasury funds platform development and security audits
+    // - Market creator gets rewarded for creating popular markets
+    // - Prevents scam markets (creator only gets 50% of fees)
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    pub fee_collector: Pubkey, // Market creator's pubkey (gets 50% of fees)
+    pub fee_collector_ata: Pubkey, // Market creator's USDC ATA
+    pub protocol_fee_collector: Pubkey, // Protocol treasury pubkey (gets 50% of fees)
+    pub protocol_fee_collector_ata: Pubkey, // Protocol treasury's USDC ATA
+    pub fee: u64,              // Fee in BPS (100 = 1%)
     pub bump: u8,
 }
