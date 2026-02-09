@@ -5,7 +5,10 @@ use anchor_lang::prelude::*;
 #[derive(Accounts)]
 #[instruction(outcome: bool)]
 pub struct ResolveMarket<'info> {
-    #[account(mut)]
+    #[account(mut,
+constraint = *resolver.key == market.resolver @ Errors::InvalidMarketResolver
+    )
+]
     pub resolver: Signer<'info>,
 
     #[account(
@@ -28,7 +31,7 @@ impl<'info> ResolveMarket<'info> {
 
         // Check resolver is the market authority
         require!(
-            self.resolver.key() == self.market.authority,
+            self.resolver.key() == self.market.resolver,
             Errors::InvalidMarketAuthority
         );
 

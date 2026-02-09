@@ -12,6 +12,12 @@ pub enum Errors {
     InvalidMint,
     #[msg("The market creator is invalid")]
     InvalidMarketAuthority,
+    #[msg("The market fee Collector is invalid")]
+    InvalidMarketFeeCollector,
+
+    #[msg("The market resolver is invalid")]
+    InvalidMarketResolver,
+
     #[msg("Market is not open for trading")]
     InvalidMarketStatus,
     #[msg("Market already finished")]
