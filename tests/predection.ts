@@ -56,11 +56,16 @@ describe("predection", () => {
         toPubkey: user.publicKey,
         lamports: 5 * lamport,
       }),
-      anchor.web3.SystemProgram.transfer({
-        fromPubkey: provider.wallet.publicKey,
-        toPubkey: protocolFeeCollector.publicKey,
-        lamports: 5 * lamport,
-      })
+anchor.web3.SystemProgram.transfer({
+          fromPubkey: provider.wallet.publicKey,
+          toPubkey: protocolFeeCollector.publicKey,
+          lamports: 5 * lamport,
+        }),
+        anchor.web3.SystemProgram.transfer({
+          fromPubkey: provider.wallet.publicKey,
+          toPubkey: resolver.publicKey,
+          lamports: 5 * lamport,
+        })
     );
 
     await provider.sendAndConfirm(transaction);
@@ -141,7 +146,7 @@ describe("predection", () => {
     let market_id = new anchor.BN(1);
     let question = "Will BTC reach $150k by end of 2026?";  // Longer question (>= 10 chars)
     let questionBytes = Buffer.from(question, 'utf-8');
-    let duration_time = new anchor.BN(1000000);
+    let duration_time = new anchor.BN(0); // immediate resolution for testing
     let fee = new anchor.BN(500);
     
     // Re-derive market PDA with the EXACT market_id being passed
@@ -316,5 +321,48 @@ describe("predection", () => {
     assert.equal(marketVaultBalance.value.uiAmount, expectedVaultAmount, "Vault should have 9.5 USDC");
     assert.equal(feeCollectorBalance.value.uiAmount, expectedFeeAmount, "Fee collector should have 0.25 USDC");
     assert.equal(protocolFeeBalance.value.uiAmount, expectedFeeAmount, "Protocol should have 0.25 USDC");
+  });
+
+  it("Resolves market with correct outcome", async () => {
+    const buyAmount = new anchor.BN(10 * 1_000_000); // 10 USDC
+    // Buy NO shares to enable resolution on both sides
+    const userYesAta = await getAssociatedTokenAddress(yesMintPda, user.publicKey);
+    const userNoAta = await getAssociatedTokenAddress(noMintPda, user.publicKey);
+    const buyNoTx = await program.methods
+      .buyShare(buyAmount, new anchor.BN(1), false)
+      .accounts({
+        signer: user.publicKey,
+        feeCollectorAta: feeCollectorColletralAta,
+        protocolFeeCollectorAta: protocolFeeCollectorAta,
+        market: marketPDA,
+        marketVault: marketVault,
+        collateralMint: collateralMint,
+        userCollateralMintAta: userCollateralAta,
+        yesMint: yesMintPda,
+        noMint: noMintPda,
+        yesMintAta: userYesAta,
+        noMintAta: userNoAta,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+        systemProgram: anchor.web3.SystemProgram.programId,
+      })
+      .signers([user])
+      .rpc();
+    await provider.connection.confirmTransaction(buyNoTx);
+
+    const resolveTx = await program.methods
+      .resolveMarket(true)
+      .accounts({
+        resolver: resolver.publicKey,
+        market: marketPDA,
+        yesMint: yesMintPda,
+        noMint: noMintPda,
+      })
+      .signers([resolver])
+      .rpc();
+    await provider.connection.confirmTransaction(resolveTx);
+    const marketAccount = await program.account.market.fetch(marketPDA);
+    assert.equal(marketAccount.option, true, "Market option should be true");
+    assert.ok("resolved" in marketAccount.status, "Market status should be Resolved");
   });
 });

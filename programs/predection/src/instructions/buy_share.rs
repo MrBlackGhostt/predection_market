@@ -90,12 +90,12 @@ impl<'info> BuyShare<'info> {
 
         require_gte!(signer_bal, amount, Errors::ErrorInvalidAmount);
 
-        let clock = Clock::get()?;
+        // let clock = Clock::get()?;
 
-        require!(
-            clock.unix_timestamp < self.market.market_close_timestamp,
-            Errors::MarketFinished
-        );
+        //        require!(
+        //            clock.unix_timestamp < self.market.market_close_timestamp,
+        //            Errors::MarketFinished
+        //        );
 
         require!(
             matches!(self.market.status, Status::Open),

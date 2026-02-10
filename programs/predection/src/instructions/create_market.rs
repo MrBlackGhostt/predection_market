@@ -109,8 +109,8 @@ impl<'info> CreateMarket<'info> {
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         // VALIDATION: Duration, Fee, Resolver
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        require!(duration_time >= 3600, Errors::DurationTooShort);
-        require!(duration_time <= 2592000, Errors::DurationTooLong);
+        // require!(duration_time >= 3600, Errors::DurationTooShort);
+        // require!(duration_time <= 2592000, Errors::DurationTooLong);
         require_gte!(1000, fee, Errors::FeeIsTooHigh);
         self.market.fee = fee;
         self.market.authority = self.market_creator.key();
