@@ -364,5 +364,33 @@ anchor.web3.SystemProgram.transfer({
     const marketAccount = await program.account.market.fetch(marketPDA);
     assert.equal(marketAccount.option, true, "Market option should be true");
     assert.ok("resolved" in marketAccount.status, "Market status should be Resolved");
+    });
+
+  it("Claims winnings for YES winner", async () => {
+    const userCollateralBefore = await provider.connection.getTokenAccountBalance(userCollateralAta);
+    const userYesAta = await getAssociatedTokenAddress(yesMintPda, user.publicKey);
+    const userNoAta = await getAssociatedTokenAddress(noMintPda, user.publicKey);
+
+    const claimTx = await program.methods
+      .claimWinning()
+      .accounts({
+        signer: user.publicKey,
+        market: marketPDA,
+        marketVault: marketVault,
+        collateralMint: collateralMint,
+        userCollateralAta: userCollateralAta,
+        yesMint: yesMintPda,
+        noMint: noMintPda,
+        yesMintAta: userYesAta,
+        noMintAta: userNoAta,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+        systemProgram: anchor.web3.SystemProgram.programId,
+      })
+      .signers([user])
+      .rpc();
+    await provider.connection.confirmTransaction(claimTx);
+    const userCollateralAfter = await provider.connection.getTokenAccountBalance(userCollateralAta);
+    assert.isAbove(userCollateralAfter.value.uiAmount, userCollateralBefore.value.uiAmount, "User should receive payout");
   });
 });
