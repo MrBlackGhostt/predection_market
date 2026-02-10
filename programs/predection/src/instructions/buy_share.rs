@@ -8,7 +8,7 @@ use crate::errors::Errors;
 use crate::states::{Market, Status};
 
 #[derive(Accounts)]
-#[instruction( is_yes:bool)]
+#[instruction(amount: u64, _market_id: u64, is_yes: bool)]
 pub struct BuyShare<'info> {
     #[account(mut)]
     signer: Signer<'info>,
