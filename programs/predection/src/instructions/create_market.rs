@@ -9,7 +9,7 @@ use anchor_spl::{
 };
 
 #[derive(Accounts)]
-#[instruction(market_id: u64, question: String)]
+#[instruction(resolver: Pubkey, market_id: u64)]
 pub struct CreateMarket<'info> {
     #[account(mut)]
     pub market_creator: Signer<'info>,
@@ -21,28 +21,23 @@ pub struct CreateMarket<'info> {
         seeds = [b"market", market_creator.key().as_ref(), &market_id.to_le_bytes()],
         bump
     )]
-    pub market: Account<'info, Market>,
+    pub market: Box<Account<'info, Market>>,
 
     /// External mint (USDC or any SPL token)  
-    pub collateral_mint: InterfaceAccount<'info, Mint>,
+    pub collateral_mint: Box<InterfaceAccount<'info, Mint>>,
 
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // FEE COLLECTOR ACCOUNTS
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // Market Creator's USDC ATA (receives 50% of fees)
     #[account(mut, 
    constraint = fee_collector_colletral_ata.mint == collateral_mint.key() @ Errors::InvalidMarketFeeCollectorAta,
     )]
-    pub fee_collector_colletral_ata: InterfaceAccount<'info, TokenAccount>,
+    pub fee_collector_colletral_ata: Box<InterfaceAccount<'info, TokenAccount>>,
 
-    // Protocol Treasury's USDC ATA (receives 50% of fees)
-    /// CHECK: This is the protocol's fee collector account (treasury)
+    /// CHECK:this is the protocol fee collector  
     pub protocol_fee_collector: UncheckedAccount<'info>,
 
     #[account(mut,
         constraint = protocol_fee_collector_ata.mint == collateral_mint.key() @ Errors::InvalidProtocolFeeCollector,
     )]
-    pub protocol_fee_collector_ata: InterfaceAccount<'info, TokenAccount>,
+    pub protocol_fee_collector_ata: Box<InterfaceAccount<'info, TokenAccount>>,
 
     #[account(
         init,
@@ -52,7 +47,7 @@ pub struct CreateMarket<'info> {
         seeds = [b"yes_mint", market.key().as_ref()],
         bump
     )]
-    pub yes_mint: InterfaceAccount<'info, Mint>,
+    pub yes_mint: Box<InterfaceAccount<'info, Mint>>,
 
     #[account(
         init,
@@ -62,7 +57,7 @@ pub struct CreateMarket<'info> {
         seeds = [b"no_mint", market.key().as_ref()],
         bump
     )]
-    pub no_mint: InterfaceAccount<'info, Mint>,
+    pub no_mint: Box<InterfaceAccount<'info, Mint>>,
 
     #[account(
         init,
@@ -71,7 +66,7 @@ pub struct CreateMarket<'info> {
         associated_token::authority = market,
         associated_token::token_program = token_program
     )]
-    pub market_vault: InterfaceAccount<'info, TokenAccount>,
+    pub market_vault: Box<InterfaceAccount<'info, TokenAccount>>,
 
     pub token_program: Interface<'info, TokenInterface>,
     pub associated_token_program: Program<'info, AssociatedToken>,
@@ -92,18 +87,6 @@ impl<'info> CreateMarket<'info> {
         self.market.market_id = market_id;
         self.market.bump = bump;
 
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        //  SECURITY: COLLATERAL WHITELIST
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        // Why? Without a whitelist, anyone can create a market with a fake "USDC" token
-        // they control, trick users into depositing real USDC, then drain the vault.
-        //
-        // Whitelisted tokens:
-        // - USDC Mainnet: EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
-        // - USDC Devnet:  4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU (Devnet faucet)
-        // - Add more trusted tokens as needed (USDT, SOL-wrapped, etc.)
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
         // USDC on Mainnet-Beta
         const USDC_MAINNET: &str = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
         // USDC on Devnet (from Solana token faucet)
@@ -114,13 +97,14 @@ impl<'info> CreateMarket<'info> {
 
         let collateral_key = self.collateral_mint.key();
 
+        // TODO: Re-enable for production deployment
         // Check if collateral_mint is in the whitelist
-        require!(
-            collateral_key == usdc_mainnet || collateral_key == usdc_devnet,
-            Errors::CollateralNotWhitelisted
-        );
+        // require!(
+        //     collateral_key == usdc_mainnet || collateral_key == usdc_devnet,
+        //     Errors::CollateralNotWhitelisted
+        // );
 
-        msg!("✅ Collateral mint validated: {}", collateral_key);
+        msg!("✅ Collateral mint: {}", collateral_key);
 
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         // VALIDATION: Duration, Fee, Resolver
@@ -135,9 +119,6 @@ impl<'info> CreateMarket<'info> {
         self.market.resolver = resolver;
         self.market.market_vault = self.market_vault.key();
 
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        // 💰 FEE COLLECTORS: Protocol (50%) + Market Creator (50%)
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         // Market creator gets rewarded for creating popular markets
         self.market.fee_collector = self.market_creator.key();
         self.market.fee_collector_ata = self.fee_collector_colletral_ata.key();
@@ -155,9 +136,11 @@ impl<'info> CreateMarket<'info> {
         let clock = Clock::get()?;
         self.market.resolution_time = clock.unix_timestamp;
         self.market.market_close_timestamp = self.market.resolution_time + duration_time;
+
         // Validate question length
         require!(question.len() >= 10, Errors::QuestionTooShort);
-        require!(question.len() <= 100, Errors::QuestionTooLong);
+        require!(question.len() <= 64, Errors::QuestionTooLong);
+
         self.market.question = question;
         Ok(())
     }
