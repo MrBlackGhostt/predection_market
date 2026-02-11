@@ -67,7 +67,7 @@ export const VolumeChart: FC<VolumeChartProps> = ({ marketPubkey }) => {
               color: 'var(--text)'
             }}
             itemStyle={{ color: 'var(--primary)' }}
-            formatter={(value: number) => [`${value} txs`, 'Activity']}
+            formatter={(value: any) => [`${value} txs`, 'Activity']}
             labelStyle={{ color: 'var(--text-secondary)', marginBottom: '0.25rem' }}
           />
           <Area 
