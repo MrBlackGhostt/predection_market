@@ -49,7 +49,7 @@ export default function PortfolioPage() {
           </div>
           <div className="card p-6 border-l-4 border-l-[var(--accent)]">
             <p className="text-sm text-[var(--text-secondary)] mb-1">Total Invested Value</p>
-            <p className="text-3xl font-mono font-bold">{formatAmount(totalInvested)} USDC</p>
+            <p className="text-3xl font-mono font-bold">{totalInvested.toFixed(2)} USDC</p>
           </div>
           {/* 
           <div className="card p-6 border-l-4 border-l-[var(--success)]">
@@ -99,7 +99,7 @@ export default function PortfolioPage() {
                     </Link>
                   </h3>
                   <p className="text-sm text-[var(--text-secondary)]">
-                    Ends: {new Date(pos.market.account.resolutionTime * 1000).toLocaleDateString()}
+                    Ends: {new Date(pos.market.account.marketCloseTimestamp * 1000).toLocaleDateString()}
                   </p>
                 </div>
 
@@ -118,7 +118,7 @@ export default function PortfolioPage() {
                   )}
                   <div className="text-right border-l border-[var(--border)] pl-8">
                      <p className="text-xs text-[var(--text-secondary)] mb-1">Value</p>
-                     <p className="font-mono font-bold">{formatAmount(pos.totalInvested)} USDC</p>
+                     <p className="font-mono font-bold">{pos.totalInvested.toFixed(2)} USDC</p>
                   </div>
                   
                   <Link 
