@@ -8,11 +8,11 @@ export const createMarketSchema = z.object({
     .max(100, 'Question must not exceed 100 characters')
     .refine((val) => val.trim().length >= 10, 'Question cannot be only whitespace'),
   
-  durationHours: z
-    .number()
-    .min(1, 'Duration must be at least 1 hour')
-    .max(8760, 'Duration must not exceed 1 year (8760 hours)')
-    .int('Duration must be a whole number'),
+  endDate: z.coerce
+    .date()
+    .refine((date) => date > new Date(), { message: "End date must be in the future" })
+    .refine((date) => date.getTime() - Date.now() >= 3600 * 1000, { message: "Duration must be at least 1 hour" })
+    .refine((date) => date.getTime() - Date.now() <= 31536000 * 1000, { message: "Duration must not exceed 1 year" }),
   
   feeBps: z
     .number()

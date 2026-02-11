@@ -16,7 +16,7 @@ export const MarketCard: FC<MarketCardProps> = ({ market }) => {
   const { account } = market;
   
   const isResolver = publicKey && account.resolver.equals(publicKey);
-  const isEnded = Date.now() / 1000 > account.resolutionTime;
+  const isEnded = Date.now() > account.marketCloseTimestamp * 1000;
   const isResolved = account.status.resolved;
 
   return (
@@ -62,7 +62,7 @@ export const MarketCard: FC<MarketCardProps> = ({ market }) => {
           <div className="text-right">
             <p className="text-xs text-[var(--text-secondary)] mb-1">Ends In</p>
             <p className={`font-mono text-sm ${isEnded ? 'text-[var(--danger)]' : 'text-[var(--success)]'}`}>
-              {formatTimeRemaining(account.resolutionTime)}
+              {formatTimeRemaining(account.marketCloseTimestamp)}
             </p>
           </div>
         </div>

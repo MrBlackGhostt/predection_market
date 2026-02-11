@@ -11,7 +11,7 @@ import { TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID } from '@solana/spl-token
 
 interface CreateMarketParams {
   question: string;
-  durationHours: number;
+  endDate: Date;
   feeBps: number;
   resolver: string;
 }
@@ -22,7 +22,7 @@ export function useCreateMarket() {
   const queryClient = useQueryClient();
 
   const createMarket = useCallback(
-    async ({ question, durationHours, feeBps, resolver }: CreateMarketParams) => {
+    async ({ question, endDate, feeBps, resolver }: CreateMarketParams) => {
       if (!wallet.publicKey) throw new Error('Wallet not connected');
 
       const program = getProgram(connection, wallet as any);
@@ -30,8 +30,12 @@ export function useCreateMarket() {
       // Generate a unique market ID based on timestamp
       const marketId = Date.now();
       
-      // Convert duration from hours to seconds
-      const durationTime = durationHours * 60 * 60;
+      // Calculate duration in seconds based on endDate
+      const durationTime = Math.floor((endDate.getTime() - Date.now()) / 1000);
+      
+      if (durationTime < 60) {
+        throw new Error("End date must be in the future");
+      }
       
       // Derive PDAs
       const [marketPDA, marketBump] = getMarketPDA(wallet.publicKey, marketId);

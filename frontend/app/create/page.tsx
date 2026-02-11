@@ -26,7 +26,8 @@ export default function CreateMarketPage() {
     resolver: zodResolver(createMarketSchema),
     defaultValues: {
       question: '',
-      durationHours: 24,
+      // Use string format for datetime-local input compatibility
+      endDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 16) as unknown as Date,
       feeBps: 100, // 1%
       resolver: publicKey?.toString() || '',
     },
@@ -105,33 +106,28 @@ export default function CreateMarketPage() {
             </p>
           </div>
 
-          {/* Duration */}
+          {/* End Date */}
           <div>
-            <label htmlFor="durationHours" className="block text-sm font-medium mb-2">
-              Duration (Hours) <span className="text-[var(--danger)]">*</span>
+            <label htmlFor="endDate" className="block text-sm font-medium mb-2">
+              End Date & Time <span className="text-[var(--danger)]">*</span>
             </label>
             <div className="relative">
               <input
-                id="durationHours"
-                type="number"
-                {...register('durationHours', { valueAsNumber: true })}
-                className="input pr-20"
-                placeholder="24"
-                min="1"
-                max="8760"
+                id="endDate"
+                type="datetime-local"
+                {...register('endDate', { valueAsDate: true })}
+                className="input"
+                min={new Date().toISOString().slice(0, 16)}
                 disabled={isSubmitting}
               />
-              <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--muted)] text-sm">
-                hours
-              </div>
             </div>
-            {errors.durationHours && (
+            {errors.endDate && (
               <p className="mt-1 text-sm text-[var(--danger)]" role="alert">
-                {errors.durationHours.message}
+                {errors.endDate.message}
               </p>
             )}
             <p className="mt-1 text-xs text-[var(--muted)]">
-              Quick reference: 24h = 1 day, 168h = 1 week, 720h = 1 month
+              When the market will close for betting
             </p>
           </div>
 
