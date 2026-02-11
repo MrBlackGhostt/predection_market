@@ -3,6 +3,7 @@
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useMarket } from '@/hooks/useMarkets';
 import { useMarketPosition } from '@/hooks/useMarketPosition';
+import { useMarketOdds } from '@/hooks/useMarketOdds';
 import { useResolveMarket } from '@/hooks/useResolveMarket';
 import { useClaimWinnings } from '@/hooks/useClaimWinnings';
 import { BuySellPanel } from '@/components/trade/BuySellPanel';
@@ -24,6 +25,7 @@ export default function MarketDetailPage() {
   const { data: market, isLoading, isError } = useMarket(marketId as string);
   const { publicKey } = useWallet();
   const { data: position } = useMarketPosition(market);
+  const { data: odds } = useMarketOdds(market);
   
   // Hooks need a valid PublicKey, so we condition them or pass dummy if undefined (though hooks should handle it)
   // Better pattern: only call hook functions when marketPubkey is defined
@@ -154,20 +156,25 @@ export default function MarketDetailPage() {
             </div>
 
             {/* Stats Row */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="card p-4">
-                <Stat label="Volume" value={`${formatAmount(0)} USDC`} /> {/* Placeholder volume */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <Stat label="Volume" value="Coming Soon" />
+                <Stat 
+                  label="Liquidity" 
+                  value={odds ? `${Math.floor(odds.totalPool).toLocaleString()} USDC` : "0 USDC"} 
+                />
+                <Stat 
+                  label="Yes Price" 
+                  value={odds ? `${odds.yesPrice.toFixed(2)} USDC` : "0.50 USDC"} 
+                  subText={odds ? `Payout: ${odds.yesOdds}` : "2.0x"}
+                  valueColor="text-[var(--success)]"
+                />
+                <Stat 
+                  label="No Price" 
+                  value={odds ? `${odds.noPrice.toFixed(2)} USDC` : "0.50 USDC"} 
+                  subText={odds ? `Payout: ${odds.noOdds}` : "2.0x"}
+                  valueColor="text-[var(--danger)]"
+                />
               </div>
-              <div className="card p-4">
-                <Stat label="Liquidity" value={`${formatAmount(0)} USDC`} /> {/* Placeholder liquidity */}
-              </div>
-              <div className="card p-4">
-                <Stat label="Yes Price" value="0.50 USDC" /> {/* Placeholder price */}
-              </div>
-              <div className="card p-4">
-                 <Stat label="No Price" value="0.50 USDC" /> {/* Placeholder price */}
-              </div>
-            </div>
 
             {/* Resolver Panel (Only visible to resolver) */}
             {isResolver && !isResolved && isEnded && (

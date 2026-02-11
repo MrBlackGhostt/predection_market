@@ -4,6 +4,7 @@ import { FC, useState } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useBuyShare } from '@/hooks/useBuyShare';
 import { useSellShare } from '@/hooks/useSellShare';
+import { useMarketOdds } from '@/hooks/useMarketOdds';
 import { Market } from '@/hooks/useMarkets';
 import { toast } from 'sonner';
 import { useUSDCBalance } from '@/hooks/useUSDCBalance';
@@ -18,6 +19,7 @@ export const BuySellPanel: FC<BuySellPanelProps> = ({ market }) => {
   const { connected } = useWallet();
   const { buyShare } = useBuyShare(market.publicKey);
   const { sellShare } = useSellShare(market.publicKey);
+  const { data: odds } = useMarketOdds(market);
   const { data: usdcBalance } = useUSDCBalance();
   const { data: solBalance } = useSOLBalance();
   const [amount, setAmount] = useState<string>('');
@@ -25,6 +27,9 @@ export const BuySellPanel: FC<BuySellPanelProps> = ({ market }) => {
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState<'buy' | 'sell'>('buy');
 
+  const price = odds ? (isYes ? odds.yesPrice : odds.noPrice) : 0.5;
+  const payoutMult = price > 0.001 ? 1 / price : 2.0;
+  
   const handleAction = async () => {
     if (!amount || parseFloat(amount) <= 0) return;
     
@@ -130,15 +135,15 @@ export const BuySellPanel: FC<BuySellPanelProps> = ({ market }) => {
       {/* Summary */}
       <div className="bg-[var(--bg-elevated)]/50 rounded-lg p-4 space-y-2 text-sm">
         <div className="flex justify-between">
-          <span className="text-[var(--text-secondary)]">Price per share</span>
-          <span className="font-mono">1.00 USDC</span>
+          <span className="text-[var(--text-secondary)]">Implied Price</span>
+          <span className="font-mono">{price.toFixed(2)} USDC ({mode === 'buy' ? `${payoutMult.toFixed(2)}x` : 'Refund Rate'})</span>
         </div>
         <div className="flex justify-between">
           <span className="text-[var(--text-secondary)]">
-            {mode === 'buy' ? 'Potential Payout' : 'Estimated Refund'}
+            {mode === 'buy' ? 'Est. Potential Payout' : 'Estimated Refund'}
           </span>
           <span className="font-mono text-[var(--primary)]">
-            {amount ? `${parseFloat(amount).toFixed(2)} USDC` : '-'}
+            {amount ? `${(parseFloat(amount) * (mode === 'buy' ? payoutMult : 1.0)).toFixed(2)} USDC` : '-'}
           </span>
         </div>
         {mode === 'buy' && (
