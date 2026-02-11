@@ -2,10 +2,9 @@
 
 import { useCallback } from 'react';
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
-import { PublicKey, Transaction, SystemProgram } from '@solana/web3.js';
+import { PublicKey, SystemProgram } from '@solana/web3.js';
 import { getProgram } from '@/lib/anchor/getProgram';
-import { getMarketPDA, getYesMintPDA, getNoMintPDA, getAssociatedTokenAddress } from '@/lib/anchor/pdas';
-import { useTxConfirm } from './useTxConfirm';
+import { getYesMintPDA, getNoMintPDA, getAssociatedTokenAddress } from '@/lib/anchor/pdas';
 import { useQueryClient } from '@tanstack/react-query';
 import BN from 'bn.js';
 import { TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID } from '@solana/spl-token';
@@ -13,7 +12,6 @@ import { TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID } from '@solana/spl-token
 export function useBuyShare(marketPubkey: PublicKey) {
   const { connection } = useConnection();
   const wallet = useWallet();
-  const { confirm } = useTxConfirm();
   const queryClient = useQueryClient();
 
   const buyShare = useCallback(
@@ -24,53 +22,96 @@ export function useBuyShare(marketPubkey: PublicKey) {
       
       // Fetch market to get details
       const market = await program.account.market.fetch(marketPubkey);
-      const marketId = (market as any).marketId.toNumber();
+      const marketData = market as any;
       
       // Derive PDAs
-      const [marketPDA] = getMarketPDA((market as any).authority, marketId);
-      const [yesMint] = getYesMintPDA(marketPDA);
-      const [noMint] = getNoMintPDA(marketPDA);
+      const [yesMint] = getYesMintPDA(marketPubkey);
+      const [noMint] = getNoMintPDA(marketPubkey);
       
       // Get user token accounts
       const userCollateralAta = await getAssociatedTokenAddress(
-        (market as any).collateralMint,
+        marketData.collateralMint,
         wallet.publicKey
       );
       
       const userYesAta = await getAssociatedTokenAddress(yesMint, wallet.publicKey);
       const userNoAta = await getAssociatedTokenAddress(noMint, wallet.publicKey);
       
-      // Create the transaction
-      const tx = await program.methods
-        .buyShare(new BN(amount), new BN(marketId), isYes)
-        .accounts({
-          buyer: wallet.publicKey,
-          market: marketPubkey,
-          yesMint: yesMint,
-          noMint: noMint,
-          collateralMint: (market as any).collateralMint,
-          collateralVault: (market as any).collateralVault,
-          userCollateralAta: userCollateralAta,
-          userYesAta: userYesAta,
-          userNoAta: userNoAta,
-          tokenProgram: TOKEN_PROGRAM_ID,
-          associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-          systemProgram: SystemProgram.programId,
-        })
-        .transaction();
-
-      const signature = await confirm(
-        tx,
-        `Buy ${isYes ? 'YES' : 'NO'} shares`
+      // Get fee collector ATAs
+      const feeCollectorAta = await getAssociatedTokenAddress(
+        marketData.collateralMint,
+        marketData.feeCollector
       );
+      
+      const protocolFeeCollectorAta = await getAssociatedTokenAddress(
+        marketData.collateralMint,
+        marketData.protocolFeeCollector
+      );
+      
+      try {
+        // Collect pre-instructions for creating user's USDC ATA if needed
+        const preInstructions = [];
+        
+        const userCollateralAccountInfo = await connection.getAccountInfo(userCollateralAta);
+        if (!userCollateralAccountInfo) {
+          console.log('Creating user collateral ATA...');
+          const { createAssociatedTokenAccountInstruction } = await import('@solana/spl-token');
+          const createUserCollateralIx = createAssociatedTokenAccountInstruction(
+            wallet.publicKey,
+            userCollateralAta,
+            wallet.publicKey,
+            marketData.collateralMint,
+            TOKEN_PROGRAM_ID,
+            ASSOCIATED_TOKEN_PROGRAM_ID
+          );
+          preInstructions.push(createUserCollateralIx);
+        }
+        
+        // Build the transaction using Anchor's .rpc() method
+        let txBuilder = program.methods
+          .buyShare(new BN(amount), new BN(marketData.marketId), isYes)
+          .accounts({
+            signer: wallet.publicKey,
+            feeCollectorAta: feeCollectorAta,
+            protocolFeeCollectorAta: protocolFeeCollectorAta,
+            market: marketPubkey,
+            marketVault: marketData.marketVault,
+            collateralMint: marketData.collateralMint,
+            userCollateralMintAta: userCollateralAta,
+            yesMint: yesMint,
+            noMint: noMint,
+            yesMintAta: userYesAta,
+            noMintAta: userNoAta,
+            tokenProgram: TOKEN_PROGRAM_ID,
+            associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+            systemProgram: SystemProgram.programId,
+          });
 
-      // Invalidate queries to refresh data
-      queryClient.invalidateQueries({ queryKey: ['markets'] });
-      queryClient.invalidateQueries({ queryKey: ['market', marketPubkey.toString()] });
+        // Add pre-instructions if any
+        if (preInstructions.length > 0) {
+          txBuilder = txBuilder.preInstructions(preInstructions);
+        }
 
-      return signature;
+        const signature = await txBuilder.rpc();
+
+        console.log(`Buy ${isYes ? 'YES' : 'NO'} shares successful! Signature:`, signature);
+
+        // Invalidate queries to refresh data
+        queryClient.invalidateQueries({ queryKey: ['markets'] });
+        queryClient.invalidateQueries({ queryKey: ['market', marketPubkey.toString()] });
+
+        return signature;
+      } catch (error: any) {
+        console.error('Buy share error:', error);
+        console.error('Error details:', {
+          message: error?.message,
+          logs: error?.logs,
+          code: error?.code,
+        });
+        throw error;
+      }
     },
-    [wallet, connection, marketPubkey, confirm, queryClient]
+    [wallet, connection, marketPubkey, queryClient]
   );
 
   return { buyShare };

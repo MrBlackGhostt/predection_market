@@ -23,7 +23,8 @@ export const BuySellPanel: FC<BuySellPanelProps> = ({ market }) => {
     setLoading(true);
     try {
       // In a real app, multiply by decimals
-      const rawAmount = parseFloat(amount) * 1_000_000; // Assuming 6 decimals
+      // const rawAmount = parseFloat(amount) * 1_000_000; // Assuming 6 decimals
+      const rawAmount = Math.floor(parseFloat(amount) * 1_000_000); 
       await buyShare(rawAmount, isYes);
       setAmount('');
       toast.success('Shares purchased successfully!');

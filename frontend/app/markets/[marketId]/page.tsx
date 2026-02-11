@@ -88,7 +88,7 @@ export default function MarketDetailPage() {
 
   const { account } = market;
   const isResolver = publicKey && account.resolver.equals(publicKey);
-  const isEnded = Date.now() / 1000 > account.resolutionTime;
+  const isEnded = account.marketCloseTimestamp * 1000 < Date.now();
   const isResolved = account.status.resolved;
 
   return (
@@ -121,7 +121,7 @@ export default function MarketDetailPage() {
           <div className="flex flex-wrap gap-6 text-sm text-[var(--text-secondary)]">
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-[var(--success)]" />
-              Ends: <span className="text-[var(--text)] font-mono">{new Date(account.resolutionTime * 1000).toLocaleDateString()}</span>
+              Ends: <span className="text-[var(--text)] font-mono">{new Date(account.marketCloseTimestamp * 1000).toLocaleDateString()}</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-[var(--warning)]" />
