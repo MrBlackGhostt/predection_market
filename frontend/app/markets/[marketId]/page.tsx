@@ -17,6 +17,7 @@ import { toast } from 'sonner';
 
 import { PublicKey } from '@solana/web3.js';
 import { PageTransition } from '@/components/shared/Motion';
+import { VolumeChart } from '@/components/markets/VolumeChart';
 
 export default function MarketDetailPage() {
   const { marketId } = useParams();
@@ -146,12 +147,13 @@ export default function MarketDetailPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column: Market Info & Stats */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Chart Placeholder */}
-            <div className="card h-80 flex items-center justify-center bg-[var(--bg-elevated)]/30 border border-[var(--border)] relative overflow-hidden group">
-              <div className="absolute inset-0 bg-gradient-to-br from-[var(--primary)]/5 to-[var(--accent)]/5 opacity-50" />
-              <div className="text-center z-10">
-                <p className="text-[var(--text-secondary)] mb-2">Volume History Chart</p>
-                <span className="text-xs px-2 py-1 bg-[var(--bg-elevated)] rounded text-[var(--muted)]">Coming Soon</span>
+            {/* Volume History Chart */}
+            <div className="card h-80 bg-[var(--bg-elevated)]/30 border border-[var(--border)] p-4 flex flex-col">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-sm font-medium text-[var(--text-secondary)]">Activity History (Last 100 Transactions)</h3>
+              </div>
+              <div className="flex-grow">
+                {marketPubkey && <VolumeChart marketPubkey={marketPubkey} />}
               </div>
             </div>
 
