@@ -10,11 +10,16 @@ import { useCreateMarket } from '@/hooks/useCreateMarket';
 import { createMarketSchema, CreateMarketFormData } from '@/lib/validation/schemas';
 import { toast } from 'sonner';
 import { PageTransition } from '@/components/shared/Motion';
+import { useUSDCBalance } from '@/hooks/useUSDCBalance';
+import { useSOLBalance } from '@/hooks/useSOLBalance';
+import { FaucetAlert } from '@/components/shared/FaucetAlert';
 
 export default function CreateMarketPage() {
   const { publicKey } = useWallet();
   const router = useRouter();
   const { createMarket } = useCreateMarket();
+  const { data: usdcBalance } = useUSDCBalance();
+  const { data: solBalance } = useSOLBalance();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const {
@@ -80,6 +85,14 @@ export default function CreateMarketPage() {
             Launch a new market and let users bet on the outcome
           </p>
         </div>
+
+        {/* Faucet Alerts */}
+        {publicKey && (solBalance || 0) < 0.05 && (
+          <FaucetAlert token="SOL" />
+        )}
+        {publicKey && (usdcBalance || 0) < 1 && (
+          <FaucetAlert token="USDC" />
+        )}
 
         {/* Form */}
         <form onSubmit={handleSubmit(onSubmit)} className="card space-y-6">

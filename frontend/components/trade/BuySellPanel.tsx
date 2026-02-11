@@ -5,6 +5,9 @@ import { useWallet } from '@solana/wallet-adapter-react';
 import { useBuyShare } from '@/hooks/useBuyShare';
 import { Market } from '@/hooks/useMarkets';
 import { toast } from 'sonner';
+import { useUSDCBalance } from '@/hooks/useUSDCBalance';
+import { useSOLBalance } from '@/hooks/useSOLBalance';
+import { FaucetAlert } from '@/components/shared/FaucetAlert';
 
 interface BuySellPanelProps {
   market: Market;
@@ -13,6 +16,8 @@ interface BuySellPanelProps {
 export const BuySellPanel: FC<BuySellPanelProps> = ({ market }) => {
   const { connected } = useWallet();
   const { buyShare } = useBuyShare(market.publicKey);
+  const { data: usdcBalance } = useUSDCBalance();
+  const { data: solBalance } = useSOLBalance();
   const [amount, setAmount] = useState<string>('');
   const [isYes, setIsYes] = useState<boolean>(true);
   const [loading, setLoading] = useState(false);
@@ -38,6 +43,8 @@ export const BuySellPanel: FC<BuySellPanelProps> = ({ market }) => {
 
   return (
     <div className="card space-y-6">
+      {connected && (solBalance || 0) < 0.05 && <FaucetAlert token="SOL" />}
+      {connected && (usdcBalance || 0) < 1 && <FaucetAlert token="USDC" />}
       <h3 className="text-xl font-display font-semibold">Place Your Bet</h3>
       
       {/* Outcome Toggle */}
