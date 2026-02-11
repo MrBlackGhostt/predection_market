@@ -25,7 +25,8 @@ export function useClaimWinnings(marketPubkey: PublicKey) {
     const marketId = (market as any).marketId.toNumber();
     
     // Derive PDAs
-    const [marketPDA] = getMarketPDA((market as any).authority, marketId);
+    // const [marketPDA] = getMarketPDA((market as any).authority, marketId); // Redundant
+    const marketPDA = marketPubkey;
     const [yesMint] = getYesMintPDA(marketPDA);
     const [noMint] = getNoMintPDA(marketPDA);
     
@@ -38,26 +39,19 @@ export function useClaimWinnings(marketPubkey: PublicKey) {
     const userYesAta = await getAssociatedTokenAddress(yesMint, wallet.publicKey);
     const userNoAta = await getAssociatedTokenAddress(noMint, wallet.publicKey);
     
-    // Get fee collector ATA
-    const feeCollectorAta = await getAssociatedTokenAddress(
-      (market as any).collateralMint,
-      (market as any).feeCollector
-    );
-    
     // Create the transaction
     const tx = await (program as any).methods
       .claimWinning()
       .accounts({
-        user: wallet.publicKey,
+        signer: wallet.publicKey, // Changed from user: to signer: matching IDL?
         market: marketPubkey,
         yesMint: yesMint,
         noMint: noMint,
         collateralMint: (market as any).collateralMint,
-        collateralVault: (market as any).collateralVault,
+        marketVault: (market as any).marketVault, // Renamed from collateralVault
         userCollateralAta: userCollateralAta,
-        userYesAta: userYesAta,
-        userNoAta: userNoAta,
-        feeCollectorAta: feeCollectorAta,
+        yesMintAta: userYesAta,
+        noMintAta: userNoAta,
         tokenProgram: TOKEN_PROGRAM_ID,
         associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
         systemProgram: SystemProgram.programId,
