@@ -6,9 +6,31 @@ import { MarketCard } from "@/components/markets/MarketCard";
 import { PageTransition, StaggerContainer, StaggerItem } from "@/components/shared/Motion";
 import Link from "next/link";
 import { AnimatePresence } from "framer-motion";
+import { useState, useMemo } from "react";
 
 export default function Home() {
   const { data: markets, isLoading, isError } = useMarkets();
+  const [filter, setFilter] = useState<'all' | 'newest' | 'ending'>('all');
+
+  const filteredMarkets = useMemo(() => {
+    if (!markets) return [];
+    
+    // Create a copy to sort
+    const sorted = [...markets];
+    
+    if (filter === 'newest') {
+      return sorted.sort((a, b) => b.account.marketId - a.account.marketId);
+    }
+    
+    if (filter === 'ending') {
+      // Filter active markets only, then sort by close time
+      return sorted
+        .filter(m => m.account.marketCloseTimestamp * 1000 > Date.now())
+        .sort((a, b) => a.account.marketCloseTimestamp - b.account.marketCloseTimestamp);
+    }
+    
+    return sorted;
+  }, [markets, filter]);
 
   return (
     <div className="min-h-screen">
@@ -46,14 +68,41 @@ export default function Home() {
         <div id="markets" className="pt-8">
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-2xl font-display font-semibold">
-              Active Markets <span className="ml-2 text-sm text-[var(--text-secondary)] font-normal">({markets?.length || 0})</span>
+              Active Markets <span className="ml-2 text-sm text-[var(--text-secondary)] font-normal">({filteredMarkets.length})</span>
             </h2>
             
-            {/* Filter Placeholder */}
+            {/* Filter Buttons */}
             <div className="flex gap-2">
-              <button className="px-3 py-1.5 text-sm rounded-lg bg-[var(--primary)]/10 text-[var(--primary)] font-medium">All</button>
-              <button className="px-3 py-1.5 text-sm rounded-lg text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)] transition-colors">Newest</button>
-              <button className="px-3 py-1.5 text-sm rounded-lg text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)] transition-colors">Ending Soon</button>
+              <button 
+                onClick={() => setFilter('all')}
+                className={`px-3 py-1.5 text-sm rounded-lg font-medium transition-all ${
+                  filter === 'all' 
+                    ? 'bg-[var(--primary)]/10 text-[var(--primary)]' 
+                    : 'text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)]'
+                }`}
+              >
+                All
+              </button>
+              <button 
+                onClick={() => setFilter('newest')}
+                className={`px-3 py-1.5 text-sm rounded-lg font-medium transition-all ${
+                  filter === 'newest' 
+                    ? 'bg-[var(--primary)]/10 text-[var(--primary)]' 
+                    : 'text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)]'
+                }`}
+              >
+                Newest
+              </button>
+              <button 
+                onClick={() => setFilter('ending')}
+                className={`px-3 py-1.5 text-sm rounded-lg font-medium transition-all ${
+                  filter === 'ending' 
+                    ? 'bg-[var(--primary)]/10 text-[var(--primary)]' 
+                    : 'text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)]'
+                }`}
+              >
+                Ending Soon
+              </button>
             </div>
           </div>
 
@@ -73,7 +122,7 @@ export default function Home() {
                 Try Again
               </button>
             </div>
-          ) : markets?.length === 0 ? (
+          ) : filteredMarkets.length === 0 ? (
             <PageTransition className="text-center py-24 bg-[var(--bg-elevated)]/50 rounded-2xl border border-[var(--border)] glass-panel">
               <div className="inline-flex h-20 w-20 items-center justify-center rounded-full bg-[var(--bg-elevated)] mb-6 shadow-inner">
                 <svg
@@ -90,9 +139,11 @@ export default function Home() {
                   />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold text-[var(--text)] mb-2">No markets yet</h3>
+              <h3 className="text-xl font-semibold text-[var(--text)] mb-2">No markets found</h3>
               <p className="text-[var(--text-secondary)] mb-8 max-w-sm mx-auto">
-                Be the first to create a prediction market on Solana!
+                {filter === 'all' 
+                  ? 'Be the first to create a prediction market on Solana!' 
+                  : 'Try adjusting your filters to see more markets.'}
               </p>
               <Link
                 href="/create"
@@ -101,12 +152,12 @@ export default function Home() {
                 <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
-                Create First Market
+                Create Market
               </Link>
             </PageTransition>
           ) : (
             <StaggerContainer className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {markets?.map((market) => (
+              {filteredMarkets.map((market) => (
                 <StaggerItem key={market.publicKey.toString()}>
                   <MarketCard market={market} />
                 </StaggerItem>
