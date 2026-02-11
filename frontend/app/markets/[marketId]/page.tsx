@@ -93,6 +93,11 @@ export default function MarketDetailPage() {
   const isEnded = account.marketCloseTimestamp * 1000 < Date.now();
   const isResolved = account.status.resolved;
 
+  const winningOutcome = account.option ? 'YES' : 'NO';
+  const userWinningShares = account.option ? (position?.yes || 0) : (position?.no || 0);
+  const userLosingShares = account.option ? (position?.no || 0) : (position?.yes || 0);
+  const canClaim = userWinningShares > 0;
+
   return (
     <div className="min-h-screen">
       <TopNav />
@@ -198,18 +203,36 @@ export default function MarketDetailPage() {
                <div className="card border-[var(--success)]/30 bg-[var(--success-bg)]/10 text-center p-8">
                 <h3 className="text-2xl font-display font-bold mb-2 text-[var(--success)]">Market Resolved</h3>
                 <p className="text-lg mb-6">
-                  Outcome: <span className="font-bold">{account.option ? 'YES' : 'NO'}</span>
+                  Outcome: <span className="font-bold">{winningOutcome}</span>
                 </p>
-                <button
-                  onClick={handleClaim}
-                  disabled={claiming}
-                  className="w-full py-4 bg-[var(--primary)] text-white rounded-xl font-bold shadow-glow hover:shadow-lg transition-all disabled:opacity-50"
-                >
-                  {claiming ? 'Claiming...' : 'Claim Winnings'}
-                </button>
-                <p className="mt-4 text-xs text-[var(--text-secondary)]">
-                  If you hold winning shares, claim your USDC payout now.
-                </p>
+                
+                {canClaim ? (
+                  <>
+                    <button
+                      onClick={handleClaim}
+                      disabled={claiming}
+                      className="w-full py-4 bg-[var(--primary)] text-white rounded-xl font-bold shadow-glow hover:shadow-lg transition-all disabled:opacity-50"
+                    >
+                      {claiming ? 'Claiming...' : 'Claim Winnings'}
+                    </button>
+                    <p className="mt-4 text-xs text-[var(--text-secondary)]">
+                      You have {userWinningShares} winning shares to claim.
+                    </p>
+                  </>
+                ) : userLosingShares > 0 ? (
+                  <div className="p-4 bg-[var(--danger)]/10 border border-[var(--danger)]/20 rounded-xl">
+                    <p className="text-[var(--danger)] font-medium mb-1">Market Resolved Against You</p>
+                    <p className="text-xs text-[var(--text-secondary)]">
+                      The market resolved to {winningOutcome}. Your {userLosingShares} {winningOutcome === 'YES' ? 'NO' : 'YES'} shares expired worthless.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="p-4 bg-[var(--bg-elevated)] rounded-xl">
+                    <p className="text-[var(--text-secondary)] text-sm">
+                      You did not participate in this market.
+                    </p>
+                  </div>
+                )}
               </div>
             ) : isEnded ? (
               <div className="card text-center p-8">
