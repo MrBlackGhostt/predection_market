@@ -39,24 +39,82 @@ export function useClaimWinnings(marketPubkey: PublicKey) {
     const userYesAta = await getAssociatedTokenAddress(yesMint, wallet.publicKey);
     const userNoAta = await getAssociatedTokenAddress(noMint, wallet.publicKey);
     
-    // Create the transaction
-    const tx = await (program as any).methods
+    // Collect pre-instructions for creating missing ATAs
+    const preInstructions = [];
+    const { createAssociatedTokenAccountInstruction } = await import('@solana/spl-token');
+
+    // 1. Check User Collateral ATA (USDC)
+    const userCollateralInfo = await connection.getAccountInfo(userCollateralAta);
+    if (!userCollateralInfo) {
+      console.log('Creating user collateral ATA...');
+      preInstructions.push(
+        createAssociatedTokenAccountInstruction(
+          wallet.publicKey,
+          userCollateralAta,
+          wallet.publicKey,
+          (market as any).collateralMint,
+          TOKEN_PROGRAM_ID,
+          ASSOCIATED_TOKEN_PROGRAM_ID
+        )
+      );
+    }
+
+    // 2. Check YES ATA
+    const yesInfo = await connection.getAccountInfo(userYesAta);
+    if (!yesInfo) {
+      console.log('Creating YES ATA...');
+      preInstructions.push(
+        createAssociatedTokenAccountInstruction(
+          wallet.publicKey,
+          userYesAta,
+          wallet.publicKey,
+          yesMint,
+          TOKEN_PROGRAM_ID,
+          ASSOCIATED_TOKEN_PROGRAM_ID
+        )
+      );
+    }
+
+    // 3. Check NO ATA
+    const noInfo = await connection.getAccountInfo(userNoAta);
+    if (!noInfo) {
+      console.log('Creating NO ATA...');
+      preInstructions.push(
+        createAssociatedTokenAccountInstruction(
+          wallet.publicKey,
+          userNoAta,
+          wallet.publicKey,
+          noMint,
+          TOKEN_PROGRAM_ID,
+          ASSOCIATED_TOKEN_PROGRAM_ID
+        )
+      );
+    }
+    
+    // Create the transaction builder
+    let txBuilder: any = (program as any).methods
       .claimWinning()
       .accounts({
-        signer: wallet.publicKey, // Changed from user: to signer: matching IDL?
+        signer: wallet.publicKey,
         market: marketPubkey,
         yesMint: yesMint,
         noMint: noMint,
         collateralMint: (market as any).collateralMint,
-        marketVault: (market as any).marketVault, // Renamed from collateralVault
+        marketVault: (market as any).marketVault,
         userCollateralAta: userCollateralAta,
         yesMintAta: userYesAta,
         noMintAta: userNoAta,
         tokenProgram: TOKEN_PROGRAM_ID,
         associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
         systemProgram: SystemProgram.programId,
-      })
-      .transaction();
+      });
+
+    // Add pre-instructions if any
+    if (preInstructions.length > 0) {
+      txBuilder = txBuilder.preInstructions(preInstructions);
+    }
+
+    const tx = await txBuilder.transaction();
 
     const signature = await confirm(
       tx,
