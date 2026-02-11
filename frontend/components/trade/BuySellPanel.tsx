@@ -3,6 +3,7 @@
 import { FC, useState } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useBuyShare } from '@/hooks/useBuyShare';
+import { useSellShare } from '@/hooks/useSellShare';
 import { Market } from '@/hooks/useMarkets';
 import { toast } from 'sonner';
 import { useUSDCBalance } from '@/hooks/useUSDCBalance';
@@ -16,26 +17,32 @@ interface BuySellPanelProps {
 export const BuySellPanel: FC<BuySellPanelProps> = ({ market }) => {
   const { connected } = useWallet();
   const { buyShare } = useBuyShare(market.publicKey);
+  const { sellShare } = useSellShare(market.publicKey);
   const { data: usdcBalance } = useUSDCBalance();
   const { data: solBalance } = useSOLBalance();
   const [amount, setAmount] = useState<string>('');
   const [isYes, setIsYes] = useState<boolean>(true);
   const [loading, setLoading] = useState(false);
+  const [mode, setMode] = useState<'buy' | 'sell'>('buy');
 
-  const handleBuy = async () => {
+  const handleAction = async () => {
     if (!amount || parseFloat(amount) <= 0) return;
     
     setLoading(true);
     try {
-      // In a real app, multiply by decimals
-      // const rawAmount = parseFloat(amount) * 1_000_000; // Assuming 6 decimals
       const rawAmount = Math.floor(parseFloat(amount) * 1_000_000); 
-      await buyShare(rawAmount, isYes);
+      
+      if (mode === 'buy') {
+        await buyShare(rawAmount, isYes);
+        toast.success('Shares purchased successfully!');
+      } else {
+        await sellShare(rawAmount, isYes);
+        toast.success('Shares sold successfully!');
+      }
       setAmount('');
-      toast.success('Shares purchased successfully!');
     } catch (error: any) {
-      console.error('Buy error:', error);
-      toast.error(error.message || 'Failed to purchase shares');
+      console.error(`${mode} error:`, error);
+      toast.error(error.message || `Failed to ${mode} shares`);
     } finally {
       setLoading(false);
     }
@@ -45,7 +52,34 @@ export const BuySellPanel: FC<BuySellPanelProps> = ({ market }) => {
     <div className="card space-y-6">
       {connected && (solBalance || 0) < 0.05 && <FaucetAlert token="SOL" />}
       {connected && (usdcBalance || 0) < 1 && <FaucetAlert token="USDC" />}
-      <h3 className="text-xl font-display font-semibold">Place Your Bet</h3>
+      
+      {/* Mode Toggle */}
+      <div className="bg-[var(--bg-elevated)] p-1 rounded-lg flex">
+        <button
+          onClick={() => setMode('buy')}
+          className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${
+            mode === 'buy'
+              ? 'bg-[var(--bg)] text-[var(--text)] shadow-sm'
+              : 'text-[var(--text-secondary)] hover:text-[var(--text)]'
+          }`}
+        >
+          Buy
+        </button>
+        <button
+          onClick={() => setMode('sell')}
+          className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${
+            mode === 'sell'
+              ? 'bg-[var(--bg)] text-[var(--text)] shadow-sm'
+              : 'text-[var(--text-secondary)] hover:text-[var(--text)]'
+          }`}
+        >
+          Sell
+        </button>
+      </div>
+
+      <h3 className="text-xl font-display font-semibold">
+        {mode === 'buy' ? 'Place Your Bet' : 'Sell Your Position'}
+      </h3>
       
       {/* Outcome Toggle */}
       <div className="flex gap-4">
@@ -100,27 +134,33 @@ export const BuySellPanel: FC<BuySellPanelProps> = ({ market }) => {
           <span className="font-mono">1.00 USDC</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-[var(--text-secondary)]">Potential Payout</span>
+          <span className="text-[var(--text-secondary)]">
+            {mode === 'buy' ? 'Potential Payout' : 'Estimated Refund'}
+          </span>
           <span className="font-mono text-[var(--primary)]">
             {amount ? `${parseFloat(amount).toFixed(2)} USDC` : '-'}
           </span>
         </div>
-        <div className="flex justify-between pt-2 border-t border-[var(--border)]">
-          <span className="text-[var(--text-secondary)]">Fee ({market.account.fee / 100}%)</span>
-          <span className="font-mono">
-            {amount ? `${(parseFloat(amount) * market.account.fee / 10000).toFixed(4)} USDC` : '-'}
-          </span>
-        </div>
+        {mode === 'buy' && (
+          <div className="flex justify-between pt-2 border-t border-[var(--border)]">
+            <span className="text-[var(--text-secondary)]">Fee ({market.account.fee / 100}%)</span>
+            <span className="font-mono">
+              {amount ? `${(parseFloat(amount) * market.account.fee / 10000).toFixed(4)} USDC` : '-'}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Action Button */}
       <button
-        onClick={handleBuy}
+        onClick={handleAction}
         disabled={!connected || !amount || loading}
         className={`w-full py-4 rounded-xl font-bold text-lg transition-all ${
-          isYes 
-            ? 'bg-[var(--success)] hover:bg-[var(--success)]/90 text-white shadow-glow'
-            : 'bg-[var(--danger)] hover:bg-[var(--danger)]/90 text-white shadow-glow'
+          mode === 'buy'
+            ? (isYes 
+                ? 'bg-[var(--success)] hover:bg-[var(--success)]/90 text-white shadow-glow'
+                : 'bg-[var(--danger)] hover:bg-[var(--danger)]/90 text-white shadow-glow')
+            : 'bg-[var(--warning)] hover:bg-[var(--warning)]/90 text-[var(--bg)] shadow-glow'
         } disabled:opacity-50 disabled:cursor-not-allowed`}
       >
         {loading ? (
@@ -134,7 +174,7 @@ export const BuySellPanel: FC<BuySellPanelProps> = ({ market }) => {
         ) : !connected ? (
           'Connect Wallet to Trade'
         ) : (
-          `Buy ${isYes ? 'YES' : 'NO'} Shares`
+          `${mode === 'buy' ? 'Buy' : 'Sell'} ${isYes ? 'YES' : 'NO'} Shares`
         )}
       </button>
     </div>
