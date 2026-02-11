@@ -8,6 +8,7 @@ export const Footer = () => {
           © {new Date().getFullYear()} SolBet. All rights reserved.
         </div>
         
+        <div className="flex items-center gap-6">
           <a
             href="https://faucet.circle.com/"
             target="_blank"
