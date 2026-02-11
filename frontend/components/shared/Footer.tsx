@@ -8,7 +8,31 @@ export const Footer = () => {
           © {new Date().getFullYear()} SolBet. All rights reserved.
         </div>
         
-        <div className="flex items-center gap-6">
+          <a
+            href="https://faucet.circle.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[var(--primary)] hover:text-[var(--primary-hover)] transition-colors flex items-center gap-2 text-sm font-medium"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              width="18"
+              height="18"
+              stroke="currentColor"
+              strokeWidth="2"
+              fill="none"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 8v8" />
+              <path d="M8 12h8" />
+            </svg>
+            Get Test USDC
+          </a>
+
+          <div className="w-px h-4 bg-[var(--border)] hidden sm:block"></div>
+
           <a
             href="https://github.com/MrBlackGhostt"
             target="_blank"
