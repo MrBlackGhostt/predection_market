@@ -323,6 +323,51 @@ anchor.web3.SystemProgram.transfer({
     assert.equal(protocolFeeBalance.value.uiAmount, expectedFeeAmount, "Protocol should have 0.25 USDC");
   });
 
+  it("Sell YES shares", async () => {
+    console.log("📉 Selling 5 YES shares...");
+    const sellAmount = new anchor.BN(5 * 1_000_000); // 5 Shares (which equals 5 USDC collateral)
+    
+    const userYesAta = await getAssociatedTokenAddress(yesMintPda, user.publicKey);
+    const userNoAta = await getAssociatedTokenAddress(noMintPda, user.publicKey);
+    
+    const preUserCollateral = await provider.connection.getTokenAccountBalance(userCollateralAta);
+    const preUserYes = await provider.connection.getTokenAccountBalance(userYesAta);
+    
+    const tx = await program.methods
+      .sellShare(sellAmount, true) // amount, is_yes
+      .accounts({
+        signer: user.publicKey,
+        market: marketPDA,
+        marketVault: marketVault,
+        collateralMint: collateralMint,
+        userCollateralAta: userCollateralAta,
+        yesMint: yesMintPda,
+        noMint: noMintPda,
+        yesMintAta: userYesAta,
+        noMintAta: userNoAta,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+        systemProgram: anchor.web3.SystemProgram.programId,
+      })
+      .signers([user])
+      .rpc();
+      
+    await provider.connection.confirmTransaction(tx);
+    
+    const postUserCollateral = await provider.connection.getTokenAccountBalance(userCollateralAta);
+    const postUserYes = await provider.connection.getTokenAccountBalance(userYesAta);
+    
+    // Assertions
+    // User sold 5 shares -> Should get 5 USDC back (since 1 share = 1 USDC in vault)
+    const collateralDiff = postUserCollateral.value.uiAmount - preUserCollateral.value.uiAmount;
+    const shareDiff = preUserYes.value.uiAmount - postUserYes.value.uiAmount;
+    
+    console.log(`✅ Sold 5 Shares. Refund: ${collateralDiff} USDC`);
+    
+    assert.approximately(collateralDiff, 5.0, 0.001, "Should receive 5 USDC back");
+    assert.approximately(shareDiff, 5.0, 0.001, "Should burn 5 YES shares");
+  });
+
   it("Resolves market with correct outcome", async () => {
     const buyAmount = new anchor.BN(10 * 1_000_000); // 10 USDC
     // Buy NO shares to enable resolution on both sides

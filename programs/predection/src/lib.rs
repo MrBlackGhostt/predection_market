@@ -51,4 +51,8 @@ pub mod predection {
         ctx.accounts.claim_winning(yes_bump, no_bump)?;
         Ok(())
     }
+
+    pub fn sell_share(ctx: Context<SellShare>, amount: u64, is_yes: bool) -> Result<()> {
+        ctx.accounts.sell_share(amount, is_yes)
+    }
 }
