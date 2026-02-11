@@ -23,10 +23,10 @@ export const TopNav: FC = () => {
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2 group">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-[var(--primary)] to-[var(--accent)] shadow-glow transition-transform group-hover:scale-105">
-              <span className="text-xl font-display font-bold text-white">P</span>
+              <span className="text-xl font-display font-bold text-white">S</span>
             </div>
             <span className="text-xl font-display font-bold text-[var(--text)] hidden sm:block">
-              Prediction Market
+              SolBet
             </span>
           </Link>
 

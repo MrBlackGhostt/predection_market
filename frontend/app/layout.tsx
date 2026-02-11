@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Space_Grotesk, DM_Sans, DM_Mono } from "next/font/google";
 import { Providers } from "@/components/Providers";
+import { Footer } from "@/components/shared/Footer";
 import "./globals.css";
 
 // Modern Grotesk Typography
@@ -26,8 +27,8 @@ const dmMono = DM_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Prediction Market | Solana",
-  description: "Decentralized prediction markets on Solana",
+  title: "SolBet | Decentralized Prediction Markets",
+  description: "Trade the future on Solana with SolBet",
 };
 
 export default function RootLayout({
@@ -39,7 +40,12 @@ export default function RootLayout({
     <html lang="en" className={`${spaceGrotesk.variable} ${dmSans.variable} ${dmMono.variable}`}>
       <body className="antialiased">
         <Providers>
-          {children}
+          <div className="flex flex-col min-h-screen">
+            <div className="flex-grow">
+              {children}
+            </div>
+            <Footer />
+          </div>
         </Providers>
       </body>
     </html>
