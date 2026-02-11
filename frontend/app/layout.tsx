@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Space_Grotesk, DM_Sans, DM_Mono } from "next/font/google";
 import { Providers } from "@/components/Providers";
 import { Footer } from "@/components/shared/Footer";
+import { BottomNav } from "@/components/nav/BottomNav";
 import "./globals.css";
 
 // Modern Grotesk Typography
@@ -38,13 +39,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${spaceGrotesk.variable} ${dmSans.variable} ${dmMono.variable}`}>
-      <body className="antialiased">
+      <body className="antialiased overflow-x-hidden bg-[var(--bg)] text-[var(--text)]">
         <Providers>
-          <div className="flex flex-col min-h-screen">
+          <div className="flex flex-col min-h-screen pb-16 md:pb-0">
             <div className="flex-grow">
               {children}
             </div>
             <Footer />
+            <BottomNav />
           </div>
         </Providers>
       </body>

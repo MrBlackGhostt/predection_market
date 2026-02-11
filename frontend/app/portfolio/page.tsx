@@ -39,7 +39,7 @@ export default function PortfolioPage() {
       <TopNav />
 
       <PageTransition className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-        <h1 className="text-3xl font-display font-bold mb-8">Your Portfolio</h1>
+        <h1 className="text-2xl md:text-3xl font-display font-bold mb-8">Your Portfolio</h1>
 
         {/* Portfolio Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12 max-w-4xl">

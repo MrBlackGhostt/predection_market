@@ -20,8 +20,8 @@ export const MarketCard: FC<MarketCardProps> = ({ market }) => {
   const isResolved = account.status.resolved;
 
   return (
-    <Link href={`/markets/${market.publicKey.toString()}`}>
-      <div className="card h-full flex flex-col hover-lift group border-[var(--border)] hover:border-[var(--primary)]/50 transition-colors">
+    <Link href={`/markets/${market.publicKey.toString()}`} className="w-full">
+      <div className="card h-full w-full flex flex-col hover-lift group border-[var(--border)] hover:border-[var(--primary)]/50 transition-colors">
         {/* Header: Status & Resolver Badge */}
         <div className="flex justify-between items-start mb-4">
           <div className="flex gap-2">
@@ -46,7 +46,7 @@ export const MarketCard: FC<MarketCardProps> = ({ market }) => {
         </div>
 
         {/* Question */}
-        <h3 className="text-lg font-display font-semibold mb-4 line-clamp-3 group-hover:text-[var(--primary)] transition-colors">
+        <h3 className="text-base md:text-lg font-display font-semibold mb-4 line-clamp-3 group-hover:text-[var(--primary)] transition-colors">
           {account.question}
         </h3>
 

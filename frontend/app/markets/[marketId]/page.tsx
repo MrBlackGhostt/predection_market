@@ -124,7 +124,7 @@ export default function MarketDetailPage() {
             )}
           </div>
           
-          <h1 className="text-3xl md:text-4xl font-display font-bold mb-4 leading-tight">
+          <h1 className="text-2xl md:text-3xl lg:text-4xl font-display font-bold mb-4 leading-tight">
             {account.question}
           </h1>
 

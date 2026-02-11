@@ -25,13 +25,13 @@ export const TopNav: FC = () => {
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-[var(--primary)] to-[var(--accent)] shadow-glow transition-transform group-hover:scale-105">
               <span className="text-xl font-display font-bold text-white">S</span>
             </div>
-            <span className="text-xl font-display font-bold text-[var(--text)] hidden sm:block">
+            <span className="text-xl font-display font-bold text-[var(--text)]">
               SolBet
             </span>
           </Link>
 
-          {/* Nav Links */}
-          <div className="flex items-center space-x-1">
+          {/* Nav Links (Desktop) */}
+          <div className="hidden md:flex items-center space-x-1">
             {navLinks.map((link) => {
               const isActive = pathname === link.href;
               return (

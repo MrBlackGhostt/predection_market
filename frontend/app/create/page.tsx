@@ -80,8 +80,8 @@ export default function CreateMarketPage() {
             </svg>
             Back to Markets
           </button>
-          <h1 className="text-4xl font-display font-bold mb-2">Create Prediction Market</h1>
-          <p className="text-[var(--text-secondary)]">
+          <h1 className="text-3xl md:text-4xl font-display font-bold mb-2">Create Prediction Market</h1>
+          <p className="text-[var(--text-secondary)] text-sm md:text-base">
             Launch a new market and let users bet on the outcome
           </p>
         </div>

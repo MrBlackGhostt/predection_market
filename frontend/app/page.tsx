@@ -19,10 +19,10 @@ export default function Home() {
         <PageTransition className="mb-12 text-center relative z-10">
           <div className="absolute inset-0 bg-gradient-radial from-[var(--primary)]/10 via-transparent to-transparent opacity-50 blur-3xl -z-10" />
           
-          <h1 className="text-5xl md:text-6xl font-display font-bold mb-6 text-gradient bg-clip-text text-transparent bg-gradient-to-r from-[var(--primary)] to-[var(--accent)] tracking-tight">
+          <h1 className="text-4xl md:text-6xl font-display font-bold mb-6 text-gradient bg-clip-text text-transparent bg-gradient-to-r from-[var(--primary)] to-[var(--accent)] tracking-tight">
             SolBet: Predict the Future
           </h1>
-          <p className="text-xl text-[var(--text-secondary)] max-w-2xl mx-auto mb-8 leading-relaxed">
+          <p className="text-lg md:text-xl text-[var(--text-secondary)] max-w-2xl mx-auto mb-8 leading-relaxed">
             Trade on the outcome of real-world events. Decentralized, transparent, and powered by Solana.
           </p>
           
