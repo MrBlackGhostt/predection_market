@@ -1,4 +1,4 @@
-import { BN } from 'bn.js';
+import BN from 'bn.js';
 import { PublicKey } from '@solana/web3.js';
 
 export function shortenAddress(address: PublicKey | string, chars = 4): string {

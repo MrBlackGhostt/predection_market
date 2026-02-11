@@ -10,20 +10,20 @@ import { PROGRAM_ID } from './pdas';
 export function getProgram(
   connection: Connection,
   wallet?: AnchorWallet
-): Program<Predection> {
+): Program<any> {
   const provider = new AnchorProvider(
     connection,
     wallet as any,
     { commitment: 'confirmed' }
   );
 
-  return new Program<Predection>(IDL as Predection, provider);
+  return new Program(IDL as any, provider);
 }
 
 /**
  * Get program without wallet (read-only)
  */
-export function getProgramReadOnly(connection: Connection): Program<Predection> {
+export function getProgramReadOnly(connection: Connection): Program<any> {
   // Create a dummy wallet for read-only operations
   const dummyWallet = {
     publicKey: PublicKey.default,
@@ -37,7 +37,7 @@ export function getProgramReadOnly(connection: Connection): Program<Predection> 
     { commitment: 'confirmed' }
   );
 
-  return new Program<Predection>(IDL as Predection, provider);
+  return new Program(IDL as any, provider);
 }
 
 export { PROGRAM_ID };

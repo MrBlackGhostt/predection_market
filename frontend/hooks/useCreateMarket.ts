@@ -105,7 +105,7 @@ export function useCreateMarket() {
         }
 
         // Build the instruction with pre-instructions to create ATAs if needed
-        let txBuilder = program.methods
+        let txBuilder: any = (program as any).methods
           .initialize(
             resolverPubkey,
             new BN(marketId),

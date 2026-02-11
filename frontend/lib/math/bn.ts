@@ -1,4 +1,4 @@
-import { BN } from 'bn.js';
+import BN from 'bn.js';
 
 /**
  * Convert UI amount to raw amount (with decimals)

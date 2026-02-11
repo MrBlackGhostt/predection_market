@@ -1,5 +1,5 @@
 import { PublicKey } from '@solana/web3.js';
-import { BN } from 'bn.js';
+import BN from 'bn.js';
 
 const PROGRAM_ID = process.env.NEXT_PUBLIC_PROGRAM_ID
   ? new PublicKey(process.env.NEXT_PUBLIC_PROGRAM_ID)

@@ -21,7 +21,7 @@ export function useClaimWinnings(marketPubkey: PublicKey) {
     const program = getProgram(connection, wallet as any);
     
     // Fetch market to get details
-    const market = await program.account.market.fetch(marketPubkey);
+    const market = await (program.account as any).market.fetch(marketPubkey);
     const marketId = (market as any).marketId.toNumber();
     
     // Derive PDAs
@@ -45,7 +45,7 @@ export function useClaimWinnings(marketPubkey: PublicKey) {
     );
     
     // Create the transaction
-    const tx = await program.methods
+    const tx = await (program as any).methods
       .claimWinning()
       .accounts({
         user: wallet.publicKey,

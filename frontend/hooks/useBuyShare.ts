@@ -21,7 +21,7 @@ export function useBuyShare(marketPubkey: PublicKey) {
       const program = getProgram(connection, wallet as any);
       
       // Fetch market to get details
-      const market = await program.account.market.fetch(marketPubkey);
+      const market = await (program.account as any).market.fetch(marketPubkey);
       const marketData = market as any;
       
       // Derive PDAs
@@ -68,7 +68,7 @@ export function useBuyShare(marketPubkey: PublicKey) {
         }
         
         // Build the transaction using Anchor's .rpc() method
-        let txBuilder = program.methods
+        let txBuilder: any = (program as any).methods
           .buyShare(new BN(amount), new BN(marketData.marketId), isYes)
           .accounts({
             signer: wallet.publicKey,

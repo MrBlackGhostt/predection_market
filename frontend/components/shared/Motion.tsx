@@ -21,7 +21,7 @@ export const PageTransition = ({ children, className }: PageTransitionProps) => 
       animate="enter"
       exit="exit"
       variants={variants}
-      transition={{ type: 'linear', duration: 0.3 }}
+      transition={{ ease: 'linear', duration: 0.3 }}
       className={className}
     >
       {children}

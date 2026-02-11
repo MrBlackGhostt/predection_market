@@ -21,7 +21,7 @@ export function useResolveMarket(marketPubkey: PublicKey) {
       const program = getProgram(connection, wallet as any);
       
       // Fetch market to get resolver
-      const market = await program.account.market.fetch(marketPubkey);
+      const market = await (program.account as any).market.fetch(marketPubkey);
       const resolver = (market as any).resolver;
 
       if (!resolver.equals(wallet.publicKey)) {
@@ -29,7 +29,7 @@ export function useResolveMarket(marketPubkey: PublicKey) {
       }
 
       // Create the transaction
-      const tx = await program.methods
+      const tx = await (program as any).methods
         .resolveMarket(outcome)
         .accounts({
           resolver: wallet.publicKey,

@@ -33,7 +33,7 @@ export function useMarkets() {
     queryKey: ['markets'],
     queryFn: async () => {
       const program = getProgramReadOnly(connection);
-      const markets = await program.account.market.all();
+      const markets = await (program.account as any).market.all();
       
       return markets.map((m: any) => ({
         publicKey: m.publicKey,
@@ -59,7 +59,7 @@ export function useMarket(marketPubkey: string | undefined) {
       if (!marketPubkey) throw new Error('Market pubkey required');
       
       const program = getProgramReadOnly(connection);
-      const market = await program.account.market.fetch(new PublicKey(marketPubkey));
+      const market = await (program.account as any).market.fetch(new PublicKey(marketPubkey));
       
       return {
         publicKey: new PublicKey(marketPubkey),
