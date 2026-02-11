@@ -57,7 +57,7 @@ export function getNoMintPDA(market: PublicKey): [PublicKey, number] {
 export async function getAssociatedTokenAddress(
   mint: PublicKey,
   owner: PublicKey,
-  programId: PublicKey = new PublicKey('TokenkgQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA')
+  programId: PublicKey = new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA')
 ): Promise<PublicKey> {
   const [address] = PublicKey.findProgramAddressSync(
     [

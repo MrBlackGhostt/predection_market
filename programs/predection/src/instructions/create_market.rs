@@ -92,13 +92,12 @@ impl<'info> CreateMarket<'info> {
         // USDC on Devnet (from Solana token faucet)
         const USDC_DEVNET: &str = "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU";
 
-        let usdc_mainnet = USDC_MAINNET.parse::<Pubkey>().unwrap();
-        let usdc_devnet = USDC_DEVNET.parse::<Pubkey>().unwrap();
-
         let collateral_key = self.collateral_mint.key();
 
         // TODO: Re-enable for production deployment
         // Check if collateral_mint is in the whitelist
+        // let usdc_mainnet = USDC_MAINNET.parse::<Pubkey>().unwrap();
+        // let usdc_devnet = USDC_DEVNET.parse::<Pubkey>().unwrap();
         // require!(
         //     collateral_key == usdc_mainnet || collateral_key == usdc_devnet,
         //     Errors::CollateralNotWhitelisted
