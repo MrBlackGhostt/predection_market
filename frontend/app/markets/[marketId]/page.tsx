@@ -2,6 +2,7 @@
 
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useMarket } from '@/hooks/useMarkets';
+import { useMarketPosition } from '@/hooks/useMarketPosition';
 import { useResolveMarket } from '@/hooks/useResolveMarket';
 import { useClaimWinnings } from '@/hooks/useClaimWinnings';
 import { BuySellPanel } from '@/components/trade/BuySellPanel';
@@ -22,6 +23,7 @@ export default function MarketDetailPage() {
   
   const { data: market, isLoading, isError } = useMarket(marketId as string);
   const { publicKey } = useWallet();
+  const { data: position } = useMarketPosition(market);
   
   // Hooks need a valid PublicKey, so we condition them or pass dummy if undefined (though hooks should handle it)
   // Better pattern: only call hook functions when marketPubkey is defined
@@ -230,14 +232,14 @@ export default function MarketDetailPage() {
                        <span className="w-2 h-2 rounded-full bg-[var(--success)]" />
                        YES Shares
                      </span>
-                     <span className="font-mono">0</span>
+                     <span className="font-mono">{position?.yes || 0}</span>
                    </div>
                    <div className="flex justify-between items-center">
                      <span className="flex items-center gap-2">
                        <span className="w-2 h-2 rounded-full bg-[var(--danger)]" />
                        NO Shares
                      </span>
-                     <span className="font-mono">0</span>
+                     <span className="font-mono">{position?.no || 0}</span>
                    </div>
                  </div>
               ) : (
